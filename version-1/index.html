@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e7a5a">
+<title>ATiempo · Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1ee; --surface:#fff; --ink:#142019; --muted:#5f6b64; --line:#e2e7e3;
+  --brand:#0e7a5a; --brand-ink:#075540; --brand-soft:#e1f1ea;
+  --amber:#d98c1f; --amber-soft:#fdf0d9; --red:#c43d33; --red-soft:#fbe6e3;
+  --walk:#cfe4da; --wait:#f6dcae; --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+
+/* ---------- escenario: teléfono + panel de prueba ---------- */
+.stage{min-height:100%;display:flex;justify-content:center;align-items:center;gap:32px;padding:24px}
+.phone{width:390px;height:820px;max-height:calc(100vh - 48px);background:var(--surface);border-radius:44px;border:10px solid #1b1f1d;box-shadow:0 30px 60px -20px rgba(20,32,25,.35);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:110px;height:26px;background:#1b1f1d;border-radius:20px;z-index:50}
+.statusbar{height:44px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 26px 4px;font-size:13px;font-weight:700}
+.app{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none}
+.app::-webkit-scrollbar{display:none}
+.screen{padding:6px 20px 24px;animation:entra .25s ease}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-width:640px){
+  .stage{padding:0;display:block}
+  .phone{width:100%;height:100vh;height:100dvh;max-height:none;border:0;border-radius:0;box-shadow:none}
+  .notch{display:none}
+  .statusbar{height:max(10px,env(safe-area-inset-top))}
+  .statusbar span{display:none}
+  .panel{display:none}
+  .fab-prueba{display:flex!important}
+}
+
+/* ---------- cabecera tipo mockup ---------- */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.logo{display:flex;align-items:center;gap:7px;font-weight:800;font-size:16px;letter-spacing:-.02em}
+.logo i{width:22px;height:22px;border-radius:7px;background:var(--brand);display:grid;place-items:center}
+.topbar .meta{font-size:13px;color:var(--muted);font-weight:600}
+h1{font-size:26px;letter-spacing:-.03em;line-height:1.15;margin-bottom:4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+
+/* ---------- formularios ---------- */
+.field{margin-bottom:13px}
+.field label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:5px}
+.input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;background:#fff;outline:none;transition:border-color .15s}
+.input:focus{border-color:var(--brand)}
+.input.error{border-color:var(--red);background:var(--red-soft)}
+.errmsg{color:var(--red);font-size:12.5px;margin-top:4px;font-weight:600}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.unit{position:relative}.unit .input{padding-right:46px}
+.unit span{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;font-weight:600;pointer-events:none}
+.chip{border:1.5px dashed #b7c4bc;border-radius:12px;padding:11px 13px;color:var(--muted);font-weight:600;text-align:left;width:100%}
+.chip.on{border-style:solid;border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:-6px;margin-bottom:12px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:14px;font-weight:700;font-size:16px;transition:transform .08s, background .15s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-ink)}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.btn[disabled]{background:#dfe5e1;color:#8b968f;cursor:not-allowed}
+.btn .spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:gira .7s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.link{color:var(--brand);font-weight:700;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- tarjetas ---------- */
+.card{border:1.5px solid var(--line);border-radius:var(--r);padding:16px;background:#fff}
+.hero{border:2px solid var(--ink);border-radius:20px;padding:18px 16px 16px;text-align:center;margin-bottom:18px}
+.hero .lbl{font-size:12.5px;letter-spacing:.12em;font-weight:700;color:var(--muted)}
+.hero .big{font-size:64px;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin:2px 0}
+.hero .big small{font-size:18px;font-weight:700;letter-spacing:0;margin-left:4px;color:var(--muted)}
+.hero .det{color:var(--muted);font-size:14px}
+.badges{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:30px;padding:4px 11px;font-size:12px;font-weight:800;letter-spacing:.04em}
+.b-ok{background:var(--brand-soft);color:var(--brand-ink)}
+.b-warn{background:var(--amber-soft);color:#8a5410}
+.b-bad{background:var(--red-soft);color:var(--red)}
+.b-soft{background:#f0f2f0;color:var(--muted);font-weight:700;letter-spacing:0}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+/* notificación push simulada */
+.push{border-radius:16px;background:rgba(245,247,245,.96);border:1px solid var(--line);box-shadow:0 10px 30px -12px rgba(0,0,0,.3);padding:11px 13px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;animation:baja .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes baja{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:none}}
+.push .ic{width:30px;height:30px;border-radius:9px;background:var(--brand);flex:none;display:grid;place-items:center}
+.push b{font-size:13px}.push p{font-size:14px}
+.push .x{margin-left:auto;color:var(--muted);font-size:18px;line-height:1;padding:0 2px}
+
+/* desglose */
+.q{font-weight:800;font-size:15px;margin-bottom:8px}
+.bar{display:flex;height:40px;border-radius:12px;overflow:hidden;border:1.5px solid var(--ink);margin-bottom:8px}
+.seg{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;border-right:1.5px solid var(--ink);min-width:24px;padding:0 3px}
+.seg:last-child{border-right:0}
+.s-walk{background:var(--walk)}.s-wait{background:var(--wait)}.s-bus{background:var(--brand);color:#fff}
+.s-pad{background:repeating-linear-gradient(-45deg,#fff 0 5px,#f3dfbd 5px 10px);color:#8a5410}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.15)}
+.expl{font-size:13.5px;color:#39443e;display:grid;gap:3px;margin-bottom:12px}
+.expl b{color:var(--ink)}
+.calc{background:#f6f8f6;border-radius:12px;padding:12px;font-size:13px;display:grid;gap:5px;margin-bottom:14px;font-variant-numeric:tabular-nums}
+.calc code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--brand-ink)}
+.aviso{border-radius:12px;padding:11px 12px;font-size:13.5px;display:flex;gap:9px;margin-bottom:14px}
+.aviso.warn{background:var(--amber-soft);color:#6d4310}
+.aviso.bad{background:var(--red-soft);color:#7d241c}
+.aviso.ok{background:var(--brand-soft);color:var(--brand-ink)}
+
+/* skeleton */
+.sk{background:linear-gradient(90deg,#eef1ee 0,#f7f9f7 50%,#eef1ee 100%);background-size:200% 100%;animation:sh 1.1s infinite;border-radius:10px}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* tablero */
+.lista-viajes{margin:14px 0}
+.viaje{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.viaje.nuevo{animation:resalta 1.6s ease}
+@keyframes resalta{0%,40%{background:var(--brand-soft)}100%{background:transparent}}
+.tick{font-weight:800;margin-left:6px}
+.tick.ok{color:var(--brand)}.tick.bad{color:var(--red)}
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.mini-stats .card{padding:12px}
+.mini-stats b{font-size:20px;display:block}
+.mini-stats span{font-size:12.5px;color:var(--muted)}
+.empty{text-align:center;padding:26px 10px;color:var(--muted);font-size:14px}
+.empty .ico{width:52px;height:52px;border-radius:16px;background:var(--brand-soft);display:grid;place-items:center;margin:0 auto 10px}
+
+/* horario */
+.dia{margin-bottom:14px}
+.dia h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.clase{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:7px}
+.clase .h{font-weight:800;font-size:16px;min-width:50px}
+.clase .m{flex:1;min-width:0}
+.clase .m b{display:block;font-size:14.5px}
+.clase .m span{font-size:12.5px;color:var(--muted)}
+.del{color:var(--muted);padding:6px;border-radius:8px}
+.del:hover{background:var(--red-soft);color:var(--red)}
+
+/* bienvenida */
+.welcome{min-height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:30px 24px 28px;background:linear-gradient(180deg,#e1f1ea 0%,#fff 62%)}
+.welcome h1{font-size:34px}
+.reloj{width:120px;height:120px;border-radius:50%;background:#fff;border:3px solid var(--ink);position:relative;margin:28px 0 22px;box-shadow:6px 6px 0 var(--brand)}
+.reloj::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--ink)}
+.aguja{position:absolute;left:50%;bottom:50%;width:3px;background:var(--ink);border-radius:3px;transform-origin:bottom center}
+.pasos{display:grid;gap:10px;margin:18px 0}
+.paso{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:#39443e}
+.paso b{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;display:grid;place-items:center}
+
+/* tabbar */
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding:6px 6px max(10px,env(safe-area-inset-bottom));background:#fff}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--muted);padding:5px 0;border-radius:10px}
+.tab svg{width:22px;height:22px}
+.tab.act{color:var(--brand)}
+.tab .pt{width:5px;height:5px;border-radius:50%;background:var(--amber);position:absolute;margin-left:16px}
+
+/* hoja inferior */
+.velo{position:absolute;inset:0;background:rgba(14,22,18,.42);z-index:40;display:flex;align-items:flex-end;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.hoja{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:10px 20px 22px;animation:sube .28s cubic-bezier(.2,.9,.3,1);max-height:88%;overflow-y:auto}
+@keyframes sube{from{transform:translateY(100%)}}
+.asa{width:40px;height:5px;border-radius:5px;background:#d5dbd7;margin:0 auto 14px}
+.hoja h2{font-size:20px;letter-spacing:-.02em;margin-bottom:4px}
+.opc{display:grid;gap:8px;margin-bottom:14px}
+.opc button{border:1.5px solid var(--line);border-radius:14px;padding:11px 13px;text-align:left}
+.opc button b{display:block;font-size:14.5px}
+.opc button span{font-size:12.5px;color:var(--muted)}
+.opc button.sel{border-color:var(--brand);background:var(--brand-soft)}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.preview{text-align:center;background:#f6f8f6;border-radius:12px;padding:10px;font-size:14px;margin-bottom:14px}
+.preview b{font-size:20px}
+
+/* toast */
+.toast{position:absolute;left:16px;right:16px;bottom:84px;z-index:60;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start;animation:sube .3s cubic-bezier(.2,.9,.3,1)}
+.toast.err{background:var(--red)}
+.toast svg{flex:none;margin-top:1px}
+
+
+/* selección de recorrido en Inicio */
+.ruta-chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:30px;padding:5px 11px 5px 9px;font-size:13px;font-weight:700;background:#fff;margin-bottom:12px}
+.ruta-chip span{color:var(--muted);font-weight:600}
+/* lista de recorridos */
+.ruta{border:1.5px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px;background:#fff}
+.ruta.act{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.ruta .cab{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.ruta .cab b{font-size:16px}
+.ruta .res{font-size:13px;color:var(--muted);margin-bottom:10px}
+.ruta .acc{display:flex;gap:8px}
+.ruta .acc button{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:13px;font-weight:700}
+.ruta .acc button.usar{background:var(--brand);border-color:var(--brand);color:#fff}
+.ruta .acc button.borrar{flex:none;color:var(--muted);padding:8px 11px}
+.ruta .acc button.borrar:hover{color:var(--red);border-color:var(--red)}
+/* clases seleccionables */
+.clase.sel{border-color:var(--brand);background:var(--brand-soft)}
+.clase .ir{flex:1;display:flex;align-items:center;gap:12px;text-align:left;min-width:0}
+.clase .sal{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.clase .sal b{display:block;font-size:15px;color:var(--ink)}
+.proximas .viaje{cursor:pointer}
+.proximas .viaje:hover{background:#f7f9f7}
+
+/* panel de prueba (fuera del teléfono) */
+.panel{width:290px;background:#fff;border-radius:20px;padding:18px;box-shadow:0 10px 30px -18px rgba(0,0,0,.3);font-size:13.5px;align-self:center}
+.panel h4{font-size:15px;margin-bottom:2px}
+.panel p.s{color:var(--muted);font-size:12.5px;margin-bottom:12px}
+.esc{display:grid;gap:6px;margin-bottom:12px}
+.esc button{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;text-align:left;font-size:12px;line-height:1.25;background:#fff;color:var(--muted)}
+.esc button i{font-style:normal;font-size:18px;width:24px;text-align:center}
+.esc button b{display:block;font-size:13px;color:var(--ink)}
+.esc button:hover{border-color:#b9c9bf}
+.esc button.on{border-color:var(--brand);background:var(--brand-soft)}
+.panel .pie{display:flex;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.panel .pie button{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:12.5px;font-weight:700}
+.fab-prueba{display:none;position:fixed;right:12px;bottom:86px;z-index:70;height:40px;padding:0 14px;border-radius:20px;background:var(--ink);color:#fff;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.panel.movil{display:block;position:fixed;inset:auto 10px 10px 10px;width:auto;z-index:80;max-height:82vh;overflow:auto}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="statusbar"><span id="sb-hora">6:35</span><span>5G ▮▮▮</span></div>
+    <div class="app" id="app"></div>
+    <nav class="tabbar" id="tabbar" hidden></nav>
+    <div id="capa"></div>
+  </div>
+
+  <aside class="panel" id="panel">
+    <h4>Panel de prueba</h4>
+    <p class="s">Simula lo que pasa afuera de la app. Escoge un escenario y mira cómo cambia la hora de salida.</p>
+    <div class="esc" id="p-esc"></div>
+    <div class="pie">
+      <button id="p-demo">Cargar demo</button>
+      <button id="p-reset" style="color:var(--red)">Empezar de cero</button>
+    </div>
+  </aside>
+</div>
+<button class="fab-prueba" id="fab">Escenarios</button>
+
+<script>
+/* =====================================================================
+   ATiempo · prototipo navegable (HTML + CSS + JS vanilla)
+   Sin backend: datos simulados + API falsa con espera + localStorage.
+   ===================================================================== */
+
+// ---------- utilidades ----------
+const DIAS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const DIAS_L = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const toMin = s => { const [h,m] = s.split(":").map(Number); return h*60+m; };
+const norm = m => ((Math.round(m)%1440)+1440)%1440;
+const hhmm = m => { m = norm(m); return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); };
+const fmt = m => { m = norm(m); const h = Math.floor(m/60); return (h%12||12)+":"+String(m%60).padStart(2,"0"); };
+const ampm = m => norm(m) < 720 ? "a. m." : "p. m.";
+const dow = f => new Date(f+"T12:00:00").getDay();
+const addDays = (f,n) => { const d = new Date(f+"T12:00:00"); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const diaMes = f => new Date(f+"T12:00:00").getDate();
+const fechaLarga = f => DIAS_L[dow(f)]+" "+diaMes(f)+" de "+MESES[new Date(f+"T12:00:00").getMonth()];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const uid = () => Math.random().toString(36).slice(2,9);
+const media = a => a.reduce((x,y)=>x+y,0)/a.length;
+const desv = a => { if (a.length < 2) return 0; const m = media(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1)); };
+// leer campos de un contenedor (sin <form>: algunas vistas previas bloquean los formularios)
+const datos = el => { const o = {}; el.querySelectorAll("[name]").forEach(i => o[i.name] = i.value); return o; };
+const alEnter = (el, fn) => el.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.tagName === "INPUT"){ e.preventDefault(); fn(); } });
+
+// ---------- 1. datos simulados (reemplazan la base de datos) ----------
+const Z = { P70:{z:0.52, t:"Normal", d:"Llegas a tiempo unos 7 de cada 10 días"},
+            P85:{z:1.04, t:"Seguro", d:"Llegas a tiempo unos 85 de cada 100 días"},
+            P95:{z:1.645,t:"Muy seguro", d:"Llegas a tiempo unos 95 de cada 100 días"} };
+const K = 5; // al 5.º viaje, el historial pesa lo mismo que la estimación externa
+const DESTINOS = ["Universidad El Bosque · Usaquén","Universidad El Bosque · Clínica El Bosque"];
+
+const RUTAS_DEMO = [
+  {id:"r1", nombre:"Desde la casa", origen:"Barrio Kennedy", cam1:8, bus:"B12", trasbordo:false, bus2:"", espTras:0, espera:10, tBus:28, destino:DESTINOS[0], cam2:7},
+  {id:"r2", nombre:"Desde el trabajo", origen:"Chapinero · Calle 53", cam1:5, bus:"B23", trasbordo:false, bus2:"", espTras:0, espera:7, tBus:22, destino:DESTINOS[0], cam2:7},
+  {id:"r3", nombre:"Desde donde mi abuela", origen:"Suba · Rincón", cam1:10, bus:"C17", trasbordo:true, bus2:"B23", espTras:6, espera:9, tBus:41, destino:DESTINOS[0], cam2:7}
+];
+const CLASES_DEMO = [
+  {id:"c1", dia:1, hora:"08:00", materia:"Redes 2", salon:"Bloque C · 302"},
+  {id:"c2", dia:2, hora:"10:00", materia:"Seminario de Investigación", salon:"Bloque I · 201"},
+  {id:"c3", dia:3, hora:"08:00", materia:"Bases de Datos", salon:"Bloque C · 105"},
+  {id:"c6", dia:3, hora:"14:00", materia:"Electiva: Ética profesional", salon:"Bloque A · 110"},
+  {id:"c4", dia:4, hora:"10:00", materia:"Ingeniería de Software II", salon:"Bloque B · 210"},
+  {id:"c5", dia:5, hora:"08:00", materia:"Redes 2", salon:"Bloque C · 302"},
+  {id:"c7", dia:6, hora:"07:00", materia:"Taller de Proyecto de Grado", salon:"Bloque F · 004"}
+];
+// [fecha, salida, llegada, duración estimada]  · 19 viajes de los últimos 30 días, desde la casa
+const VIAJES_DEMO = [
+  ["2026-10-14","06:58","07:54",54],["2026-10-15","09:03","09:53",49],["2026-10-16","06:57","07:54",55],
+  ["2026-10-19","06:57","07:49",55],["2026-10-20","09:03","09:50",49],["2026-10-22","09:04","09:53",48],
+  ["2026-10-23","06:56","07:55",56],["2026-10-26","06:56","07:51",56],["2026-10-27","09:04","09:54",48],
+  ["2026-10-28","07:05","08:06",56],["2026-10-29","09:04","09:50",48],["2026-10-30","06:55","07:51",57],
+  ["2026-11-03","09:04","09:55",48],["2026-11-04","06:55","07:54",57],["2026-11-06","06:55","07:50",57],
+  ["2026-11-09","06:55","07:53",57],["2026-11-10","09:10","09:57",48],["2026-11-11","07:02","08:03",57],
+  ["2026-11-12","09:05","09:55",48]
+];
+function viajesDemo(){
+  return VIAJES_DEMO.map(([f,s,l,p]) => {
+    const c = CLASES_DEMO.filter(c => c.dia === dow(f)).sort((a,b)=>toMin(a.hora)-toMin(b.hora))[0];
+    return {id:uid(), fecha:f, rutaId:"r1", claseId:c.id, materia:c.materia, horaClase:toMin(c.hora), salida:toMin(s), llegada:toMin(l), pred:p};
+  });
+}
+const HOY = "2026-11-13", AHORA = toMin("06:35");
+
+// ---------- escenarios del panel de prueba ----------
+const ESCENARIOS = {
+  normal:       {t:"Día normal",               d:"Tráfico según el día y la hora"},
+  lluvia:       {t:"Lluvia",                   d:"Bus más lento y más espera"},
+  tranco:       {t:"Trancón",                  d:"Accidente o vía cerrada"},
+  lluviaTranco: {t:"Lluvia + trancón",         d:"El peor caso de hora pico"},
+  busDemora:    {t:"El bus se demoró",          d:"Espera mucho más larga de lo habitual"},
+  manifestacion:{t:"Manifestación en la ruta",  d:"Desvíos y buses represados"},
+  despejado:    {t:"Vías despejadas",           d:"Festivo o vacaciones"},
+  api:          {t:"Sin conexión con la API",   d:"No llegan datos de tráfico"},
+  dormido:      {t:"Me quedé dormido",          d:"Ya pasó la hora de salir"}
+};
+
+// ---------- modelo de tráfico (lo que devolvería la API de rutas) ----------
+function hashN(s){ let h = 2166136261; for (const ch of String(s)){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; }
+const FRANJAS = [ ["00:00","05:59",0,"Madrugada"],["06:00","08:45",3,"Hora pico de la mañana"],["08:46","11:59",-4,"Media mañana"],
+                  ["12:00","15:59",3,"Mediodía"],["16:00","19:45",10,"Hora pico de la tarde"],["19:46","23:59",2,"Noche"] ];
+const POR_DIA = {0:-4, 1:2, 2:1, 3:2, 4:1, 5:-1, 6:-3};
+const CONDS = { // minutos extra en el bus y en la espera
+  lluvia:        {bus:r => Math.round(0.3*r.tBus),      esp:4,  t:"Lluvia",                por:"la lluvia"},
+  tranco:        {bus:() => 15,                          esp:3,  t:"Trancón en la ruta",    por:"el trancón"},
+  lluviaTranco:  {bus:r => Math.round(0.3*r.tBus) + 15,  esp:7,  t:"Lluvia y trancón",      por:"la lluvia y el trancón"},
+  busDemora:     {bus:() => 0,                           esp:12, t:"El bus viene demorado", por:"que el bus viene demorado"},
+  manifestacion: {bus:() => 25,                          esp:10, t:"Manifestación",         por:"la manifestación"},
+};
+function modeloTrafico(r, fecha, T, escenario){
+  const f = FRANJAS.find(x => T >= toMin(x[0]) && T <= toMin(x[1])), escala = r.tBus / 28;
+  const ruido = Math.round(hashN(fecha + "|" + T) * 8) - 3;          // cada día es un poco distinto
+  let extra = Math.round((f[2] + POR_DIA[dow(fecha)] + ruido) * escala), espExtra = 0;
+  let cond = f[2] >= 3 ? "pico" : "normal", etiqueta = f[2] >= 3 ? "Hora pico" : "Tráfico normal", por = "";
+  if (escenario === "despejado"){ extra = -Math.round(2*escala); cond = "despejado"; etiqueta = "Vías despejadas"; }
+  const c = CONDS[escenario];
+  if (c){ extra += c.bus(r); espExtra = c.esp; cond = escenario; etiqueta = c.t; por = c.por; }
+  extra = Math.max(extra, -Math.round(0.2*r.tBus));
+  return { minBus: r.tBus + extra, extra, espExtra, cond, etiqueta, por, franja: f[3] };
+}
+
+// ---------- 2. API falsa: misma forma que tendrá el backend ----------
+const api = {
+  consultarTrafico(r, fecha, horaLlegada){               // RF-03
+    return new Promise((ok, falla) => setTimeout(() => {
+      if (S.sim.esc === "api") falla(new Error("timeout"));
+      else ok(modeloTrafico(r, fecha, horaLlegada, S.sim.esc));
+    }, S.sim.esc === "api" ? 1300 : 600 + Math.random()*500));
+  },
+  guardarRuta(r){ return wait(650).then(() => { const i = S.rutas.findIndex(x => x.id === r.id); if (i >= 0) S.rutas[i] = r; else S.rutas.push(r); guardar(); return r; }); },
+  guardarHorario(c){ return wait(550).then(() => { S.clases = c; guardar(); return c; }); },
+  registrarViaje(v){ return wait(600).then(() => { S.viajes.push(v); guardar(); return v; }); }
+  // Con backend real solo cambia esta capa: consultarTrafico: (r,f,t) => fetch(`/api/trafico?...`).then(x => x.json())
+};
+
+// ---------- 3. persistencia local ----------
+const LS = "atiempo-prototipo-v3";
+let S;
+function estadoVacio(){ return {setup:false, rutas:[], rutaId:null, clases:[], viajes:[], prefs:{M:5,q:"P85"}, enCamino:null, pushVisto:{}, ultRec:{}, sel:null, editRuta:null,
+  sim:{fecha:HOY, min:AHORA, esc:"normal"}, pantalla:"bienvenida"}; }
+function cargar(){ try { const j = JSON.parse(localStorage.getItem(LS)); if (j && j.sim) return j; } catch(e){} return estadoVacio(); }
+function guardar(){ try { localStorage.setItem(LS, JSON.stringify(S)); } catch(e){} }
+S = cargar();
+
+// ---------- 4. motor de recomendación (RF-04 / RF-05) ----------
+const ruta = () => S.rutas.find(r => r.id === S.rutaId) || S.rutas[0];
+const dur = v => v.llegada - v.salida;
+const declarado = r => r.cam1 + r.espera + (r.trasbordo ? r.espTras : 0) + r.tBus + r.cam2;
+const historial = (T, rid) => S.viajes.filter(v => v.rutaId === rid && Math.abs(v.horaClase - T) <= 60);
+
+function recomendar(clase, trafico){
+  const r = ruta(), T = toMin(clase.hora), hist = historial(T, r.id), n = hist.length, decl = declarado(r);
+  const resid = hist.map(v => dur(v) - v.pred), sesgo = n ? media(resid) : 0, H = n ? media(hist.map(dur)) : null;
+  let w, E = null, D, sigma, conf, modo;
+  if (trafico){
+    E = r.cam1 + r.espera + trafico.espExtra + (r.trasbordo ? r.espTras : 0) + trafico.minBus + r.cam2;   // tramos de hoy
+    // Fórmula de la propuesta:  D = w·H̄ + (1 − w)·E,  con  w = n / (n + k),  k = 5
+    w = n/(n+K); D = n ? w*H + (1-w)*E : E;
+    sigma = n >= 3 ? desv(resid) : 0.2*decl;            // σ: desviación de los residuos (real − estimado)
+    conf = n >= 5 ? "alta" : "media"; modo = "normal";
+  } else {
+    w = 1; modo = "degradado";                          // modo degradado: w = 1 (100 % historial); si n < 3, tiempo declarado y σ = 20 %
+    if (n >= 3){ D = H; sigma = desv(resid); conf = "media"; } else { D = decl; sigma = 0.2*decl; conf = "baja"; }
+  }
+  // Dq = D + zq·σ   ·   S = T − (Dq + M)
+  const z = Z[S.prefs.q].z, Dr = Math.round(D), colchon = Math.round(z*sigma), M = S.prefs.M, salida = T - (Dr + colchon + M);
+  const t = { cam1:r.cam1, espera:r.espera + (r.trasbordo ? r.espTras : 0) + (trafico ? trafico.espExtra : 0), bus:r.tBus,
+              extra: trafico ? trafico.extra : 0, cam2:r.cam2, espExtra: trafico ? trafico.espExtra : 0 };
+  t.ajuste = Dr - (t.cam1 + t.espera + t.bus + t.extra + t.cam2);
+  return {T, n, H, E, w, D, Dr, colchon, M, salida, llegada: salida + Dr, conf, modo, tramos:t, decl, trafico, ruta:r};
+}
+const traficoSync = (fecha, T) => S.sim.esc === "api" ? null : modeloTrafico(ruta(), fecha, T, S.sim.esc);
+
+// ---------- clases próximas y clase seleccionada ----------
+const viajada = (f, c) => S.viajes.some(v => v.fecha === f && v.claseId === c.id);
+function proximasClases(k){
+  const out = [];
+  for (let i = 0; i < 15 && out.length < k; i++){
+    const f = addDays(S.sim.fecha, i);
+    S.clases.filter(c => c.dia === dow(f)).sort((a,b) => toMin(a.hora)-toMin(b.hora)).forEach(c => {
+      if (out.length >= k || (i === 0 && toMin(c.hora) <= S.sim.min) || viajada(f, c)) return;
+      out.push({clase:c, fecha:f, dias:i});
+    });
+  }
+  return out;
+}
+function siguienteDe(c){ // próxima vez que toca esta clase
+  for (let i = 0; i < 15; i++){ const f = addDays(S.sim.fecha, i);
+    if (dow(f) === c.dia && !(i === 0 && toMin(c.hora) <= S.sim.min) && !viajada(f, c)) return {clase:c, fecha:f, dias:i}; }
+  return null;
+}
+function claseMostrada(){
+  if (S.sel){
+    const c = S.clases.find(c => c.id === S.sel.claseId);
+    const vale = c && !viajada(S.sel.fecha, c) && (S.sel.fecha > S.sim.fecha || (S.sel.fecha === S.sim.fecha && toMin(c.hora) > S.sim.min));
+    if (vale) return {clase:c, fecha:S.sel.fecha, dias: Math.round((new Date(S.sel.fecha) - new Date(S.sim.fecha))/864e5), elegida:true};
+    S.sel = null;
+  }
+  return proximasClases(1)[0] || null;
+}
+// poner el "reloj" del celular un rato antes de la salida de esa clase (o después, si se quedó dormido)
+function ajustarReloj(item){
+  const rec = recomendar(item.clase, traficoSync(item.fecha, toMin(item.clase.hora)));
+  S.sim.fecha = item.fecha;
+  S.sim.min = S.sim.esc === "dormido" ? rec.salida + 6 : rec.salida - 20;
+  item.dias = 0;
+}
+function seleccionarClase(c){
+  const item = siguienteDe(c) || {clase:c, fecha:addDays(S.sim.fecha, ((c.dia - dow(S.sim.fecha) + 7) % 7) || 7), dias:1};
+  S.sel = {claseId:c.id, fecha:item.fecha};
+  ajustarReloj(item); consulta = null; guardar();
+  ir("inicio");
+}
+
+// ---------- 5. interfaz ----------
+const $app = document.getElementById("app"), $tab = document.getElementById("tabbar"), $capa = document.getElementById("capa");
+const ICO = {
+  logo:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  inicio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  recorrido:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H17a3.5 3.5 0 0 0 0-7H7a3.5 3.5 0 0 1 0-7h8.5"/></svg>',
+  horario:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  tablero:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+  alerta:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+  bus:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0e7a5a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3"/><circle cx="8" cy="14.5" r=".8"/><circle cx="16" cy="14.5" r=".8"/></svg>',
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+};
+const topbar = meta => `<div class="topbar"><div class="logo"><i>${ICO.logo}</i>ATiempo</div><div class="meta">${meta}</div></div>`;
+
+function ir(p){ S.pantalla = p; guardar(); render(); $app.scrollTop = 0; }
+function render(){
+  document.getElementById("sb-hora").textContent = fmt(S.sim.min);
+  if (!S.setup && !["bienvenida","rutaForm","horario"].includes(S.pantalla)) S.pantalla = "bienvenida";
+  ({bienvenida:vBienvenida, rutaForm:vRutaForm, recorrido:vRecorridos, horario:vHorario, inicio:vInicio, tablero:vTablero})[S.pantalla]();
+  renderTabs(); pintarPanel();
+}
+function renderTabs(){
+  if (!S.setup){ $tab.hidden = true; return; }
+  $tab.hidden = false;
+  const activa = S.pantalla === "rutaForm" ? "recorrido" : S.pantalla;
+  $tab.innerHTML = ["inicio","recorrido","horario","tablero"].map(t =>
+    `<button class="tab ${activa===t?"act":""}" data-t="${t}">${ICO[t]}${t[0].toUpperCase()+t.slice(1)}${t==="tablero"&&S.enCamino?'<span class="pt"></span>':""}</button>`).join("");
+  $tab.querySelectorAll(".tab").forEach(b => b.onclick = () => ir(b.dataset.t));
+}
+function toast(msg, tipo){
+  const t = document.createElement("div");
+  t.className = "toast" + (tipo==="err" ? " err" : "");
+  t.innerHTML = (tipo==="err" ? ICO.alerta : ICO.check) + `<div>${msg}</div>`;
+  $capa.querySelector(".toast")?.remove(); $capa.appendChild(t);
+  setTimeout(() => t.remove(), 5200);
+}
+function cargando(btn, txt){ btn.disabled = true; btn.dataset.txt = btn.innerHTML; btn.innerHTML = `<span class="spin"></span>${txt}`; }
+function hoja(html, onMount){
+  $capa.innerHTML = `<div class="velo" id="velo"><div class="hoja" role="dialog"><div class="asa"></div>${html}</div></div>`;
+  const v = document.getElementById("velo"); v.onclick = e => { if (e.target === v) cerrarHoja(); };
+  onMount && onMount(v);
+}
+function cerrarHoja(){ $capa.querySelector("#velo")?.remove(); }
+function mostrarErrores(f, errs){
+  f.querySelectorAll(".errmsg").forEach(el => { const k = el.dataset.e; el.hidden = !errs[k]; el.textContent = errs[k] || ""; });
+  f.querySelectorAll(".input").forEach(el => el.classList.toggle("error", !!errs[el.name]));
+  f.querySelector(".input.error")?.focus();
+}
+const campo = (n,l,t,v,ph) => `<div class="field"><label for="${n}">${l}</label><input class="input" id="${n}" name="${n}" type="${t}" value="${esc(v)}" placeholder="${ph}"><div class="errmsg" data-e="${n}" hidden></div></div>`;
+const campoMin = (n,l,v,ph) => `<div class="field"><label for="${n}">${l}</label><div class="unit"><input class="input" id="${n}" name="${n}" inputmode="numeric" value="${esc(v)}" placeholder="${ph}"><span>min</span></div><div class="errmsg" data-e="${n}" hidden></div></div>`;
+const resumenRuta = r => `${esc(r.origen)} → ${esc(r.bus)}${r.trasbordo ? " + " + esc(r.bus2) : ""} → ${esc(r.destino.split(" · ")[0].replace("Universidad","U."))} · unos ${declarado(r)} min`;
+
+// ---------- bienvenida ----------
+function vBienvenida(){
+  $app.innerHTML = `<div class="welcome">
+    <div>
+      <div class="logo"><i>${ICO.logo}</i>ATiempo</div>
+      <div class="reloj"><div class="aguja" style="height:34px;transform:rotate(-30deg)"></div><div class="aguja" style="height:44px;width:2px;transform:rotate(330deg)"></div></div>
+      <h1>Sal a la hora justa, ni antes ni tarde.</h1>
+      <p class="sub" style="margin-top:8px">ATiempo calcula a qué hora salir para cada clase con tu recorrido real, el tráfico del día y tus viajes anteriores.</p>
+      <div class="pasos">
+        <div class="paso"><b>1</b><span>Cuéntanos tu recorrido y tu horario (una sola vez).</span></div>
+        <div class="paso"><b>2</b><span>Antes de cada clase te decimos a qué hora salir, y por qué.</span></div>
+        <div class="paso"><b>3</b><span>Marcas tu salida y tu llegada, y la estimación aprende de ti.</span></div>
+      </div>
+    </div>
+    <div style="display:grid;gap:10px">
+      <button class="btn btn-primary" id="b-empezar">Configurar mi recorrido</button>
+      <button class="btn btn-ghost" id="b-demo">Ver con un mes de viajes (demo)</button>
+      <p style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:4px">Solo usamos los lugares que tú escribes. No rastreamos tu ubicación (Ley 1581 de 2012).</p>
+    </div>
+  </div>`;
+  document.getElementById("b-empezar").onclick = () => { S.editRuta = "nuevo"; ir("rutaForm"); };
+  document.getElementById("b-demo").onclick = cargarDemo;
+}
+function cargarDemo(){
+  const escAnt = S.sim.esc;
+  S = estadoVacio(); S.sim.esc = escAnt === "dormido" ? "normal" : escAnt;
+  S.setup = true; S.rutas = RUTAS_DEMO.map(r => ({...r})); S.rutaId = "r1";
+  S.clases = CLASES_DEMO.map(c => ({...c})); S.viajes = viajesDemo();
+  consulta = null; ir("inicio");
+}
+
+// ---------- recorridos (RF-02): varios, y se elige uno ----------
+function vRecorridos(){
+  $app.innerHTML = `<div class="screen">${topbar("Recorrido")}
+    <h1>Mis recorridos</h1>
+    <p class="sub">Guarda los caminos que usas para llegar a la U y escoge desde dónde sales hoy.</p>
+    ${S.rutas.map(r => `<div class="ruta ${r.id === S.rutaId ? "act" : ""}">
+      <div class="cab"><b>${esc(r.nombre)}</b>${r.id === S.rutaId ? '<span class="badge b-ok">EN USO</span>' : ""}</div>
+      <div class="res">${resumenRuta(r)}<br>${S.viajes.filter(v => v.rutaId === r.id).length} viajes registrados con este recorrido</div>
+      <div class="acc">
+        ${r.id === S.rutaId ? "" : `<button class="usar" data-usar="${r.id}">Usar este</button>`}
+        <button data-edit="${r.id}">Editar</button>
+        <button class="borrar" data-del="${r.id}" aria-label="Eliminar ${esc(r.nombre)}">${ICO.x}</button>
+      </div></div>`).join("")}
+    <button class="btn btn-ghost" id="b-nueva">+ Agregar recorrido</button>
+  </div>`;
+  $app.querySelectorAll("[data-usar]").forEach(b => b.onclick = () => usarRuta(b.dataset.usar));
+  $app.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { S.editRuta = b.dataset.edit; ir("rutaForm"); });
+  $app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    if (S.rutas.length === 1){ toast("Necesitas al menos un recorrido.", "err"); return; }
+    const r = S.rutas.find(x => x.id === b.dataset.del);
+    S.rutas = S.rutas.filter(x => x.id !== r.id); if (S.rutaId === r.id) S.rutaId = S.rutas[0].id;
+    guardar(); render(); toast(`Eliminaste «${esc(r.nombre)}».`);
+  });
+  document.getElementById("b-nueva").onclick = () => { S.editRuta = "nuevo"; ir("rutaForm"); };
+}
+function usarRuta(id, quedarse){
+  const antes = salidaRapida();
+  S.rutaId = id; consulta = null; guardar();
+  const despues = salidaRapida(), r = ruta();
+  if (!quedarse) ir("inicio"); else render();
+  toast(`Ahora usas «${esc(r.nombre)}».` + (antes && despues ? ` Tu salida para ${esc(despues.item.clase.materia)} ${antes.rec.salida !== despues.rec.salida ? `pasó de ${fmt(antes.rec.salida)} a ${fmt(despues.rec.salida)}` : `sigue a las ${fmt(despues.rec.salida)}`}.` : ""));
+}
+function vRutaForm(){
+  const enSetup = !S.setup, nueva = S.editRuta === "nuevo" || !S.rutas.some(x => x.id === S.editRuta);
+  const r = nueva ? {nombre: S.rutas.length ? "" : "Desde la casa", origen:"", cam1:"", bus:"", trasbordo:false, bus2:"", espTras:"", espera:"", tBus:"", destino:DESTINOS[0], cam2:""} : S.rutas.find(x => x.id === S.editRuta);
+  $app.innerHTML = `<div class="screen">
+    ${topbar(enSetup ? "Paso 1 de 2" : nueva ? "Nuevo recorrido" : "Editar recorrido")}
+    <h1>${enSetup ? "Mi recorrido" : nueva ? "Nuevo recorrido" : esc(r.nombre)}</h1>
+    <p class="sub">${enSetup ? "Escribe cómo llegas normalmente. Los tiempos pueden ser a ojo: la app los ajusta con tus viajes." : "Los tiempos pueden ser aproximados."}</p>
+    <div id="f">
+      ${campo("nombre","Nombre del recorrido","text",r.nombre,"Ej.: Desde el trabajo")}
+      ${campo("origen","Salgo desde","text",r.origen,"Ej.: Barrio Kennedy")}
+      ${campoMin("cam1","Camino hasta el paradero",r.cam1,"8")}
+      <div class="field"><label for="bus">Bus habitual</label>
+        <div class="row2"><input class="input" id="bus" name="bus" value="${esc(r.bus)}" placeholder="Ej.: B12">
+        <button type="button" class="chip ${r.trasbordo?"on":""}" id="tras">${r.trasbordo?"✓ Con trasbordo":"+ trasbordo"}</button></div>
+        <div class="errmsg" data-e="bus" hidden></div></div>
+      <div id="tras-box" ${r.trasbordo?"":"hidden"}><div class="row2">
+        ${campo("bus2","Segundo bus","text",r.bus2,"Ej.: 14-6")}
+        ${campoMin("espTras","Espera del trasbordo",r.espTras,"5")}</div></div>
+      ${campoMin("espera","Espera habitual en el paradero",r.espera,"10")}
+      ${campoMin("tBus","Tiempo dentro del bus (día normal)",r.tBus,"28")}
+      <div class="field"><label for="destino">Llego a</label>
+        <select class="input" id="destino" name="destino">${DESTINOS.map(d => `<option ${r.destino===d?"selected":""}>${d}</option>`).join("")}</select></div>
+      ${campoMin("cam2","Camino desde la estación hasta el salón",r.cam2,"7")}
+      ${enSetup ? `<div class="field"><label>Primera clase del lunes</label>
+        <div class="row2"><input class="input" name="materia" placeholder="Ej.: Redes 2"><input class="input" type="time" name="hora" value="08:00"></div>
+        <div class="errmsg" data-e="materia" hidden></div></div>` : ""}
+      <button class="btn btn-primary" id="b-guardar" type="button">${enSetup ? "Guardar recorrido" : "Guardar"}</button>
+      <button type="button" class="btn" style="color:var(--muted);font-size:14px;margin-top:6px" id="b-atras">${enSetup ? "Volver" : "Cancelar"}</button>
+    </div></div>`;
+  const f = document.getElementById("f");
+  let tras = r.trasbordo;
+  document.getElementById("tras").onclick = e => { tras = !tras; e.target.classList.toggle("on", tras); e.target.textContent = tras ? "✓ Con trasbordo" : "+ trasbordo"; document.getElementById("tras-box").hidden = !tras; };
+  document.getElementById("b-atras").onclick = () => ir(enSetup ? "bienvenida" : "recorrido");
+  const enviar = async () => {
+    const d = datos(f), errs = {};
+    const num = k => { const v = Number(d[k]); if (d[k]==="" || isNaN(v)) errs[k] = "Escribe los minutos (puede ser aproximado)."; else if (v < 0 || v > 180) errs[k] = "Debe estar entre 0 y 180 minutos."; return v; };
+    if (!d.nombre.trim()) errs.nombre = "Ponle un nombre, por ejemplo «Desde la casa».";
+    else if (S.rutas.some(x => x.id !== r.id && x.nombre.toLowerCase() === d.nombre.trim().toLowerCase())) errs.nombre = "Ya tienes un recorrido con ese nombre.";
+    if (!d.origen.trim()) errs.origen = "¿Desde dónde sales? Basta con el barrio.";
+    if (!d.bus.trim()) errs.bus = "Escribe la ruta que tomas, por ejemplo B12.";
+    const nr = { id: nueva ? uid() : r.id, nombre:d.nombre.trim(), origen:d.origen.trim(), cam1:num("cam1"), bus:d.bus.trim(), trasbordo:tras,
+                 bus2: tras ? (d.bus2||"").trim() : "", espTras: tras ? num("espTras") : 0, espera:num("espera"), tBus:num("tBus"), destino:d.destino, cam2:num("cam2") };
+    if (tras && !nr.bus2) errs.bus2 = "Escribe el segundo bus.";
+    if (!errs.tBus && nr.tBus < 3) errs.tBus = "Parece muy corto para un viaje en bus. Revísalo.";
+    if (enSetup && (!d.materia.trim() || !d.hora)) errs.materia = "Escribe la materia y la hora de tu primera clase del lunes.";
+    mostrarErrores(f, errs);
+    if (Object.keys(errs).length){ toast("Revisa los campos marcados en rojo.", "err"); return; }
+    const antes = salidaRapida();
+    cargando(document.getElementById("b-guardar"), "Guardando…");
+    await api.guardarRuta(nr);
+    if (enSetup){
+      S.rutaId = nr.id; S.clases = [{id:uid(), dia:1, hora:d.hora, materia:d.materia.trim(), salon:""}];
+      guardar(); ir("horario"); return;
+    }
+    if (nueva){ S.rutaId = nr.id; }
+    consulta = null; guardar();
+    const despues = salidaRapida();
+    ir("recorrido");
+    toast(nueva ? `Guardaste «${esc(nr.nombre)}» y quedó en uso.` + (despues ? ` Para ${esc(despues.item.clase.materia)} saldrías a las ${fmt(despues.rec.salida)}.` : "")
+      : `Guardaste los cambios.` + (antes && despues && S.rutaId === nr.id ? (antes.rec.salida !== despues.rec.salida ? ` Tu salida pasó de ${fmt(antes.rec.salida)} a ${fmt(despues.rec.salida)}.` : ` Tu salida sigue a las ${fmt(despues.rec.salida)}.`) : ""));
+  };
+  document.getElementById("b-guardar").onclick = enviar;
+  alEnter(f, enviar);
+}
+function salidaRapida(){
+  if (!S.setup || !ruta()) return null;
+  const item = claseMostrada(); if (!item) return null;
+  return {item, rec: recomendar(item.clase, traficoSync(item.fecha, toMin(item.clase.hora)))};
+}
+
+// ---------- horario (RF-01): agregar, quitar y escoger una clase ----------
+function vHorario(){
+  const enSetup = !S.setup, mostrada = enSetup ? null : claseMostrada();
+  const porDia = [1,2,3,4,5,6].map(d => ({d, cs: S.clases.filter(c => c.dia===d).sort((a,b)=>toMin(a.hora)-toMin(b.hora))})).filter(x => x.cs.length);
+  $app.innerHTML = `<div class="screen">
+    ${topbar(enSetup ? "Paso 2 de 2" : "Horario")}
+    <h1>Mi horario</h1>
+    <p class="sub">${enSetup ? "Agrega las demás clases de la semana. ATiempo te avisa antes de cada una." : "Toca una clase para ver a qué hora tendrías que salir ese día."}</p>
+    ${porDia.length ? porDia.map(x => `<div class="dia"><h3>${DIAS_L[x.d]}</h3>${x.cs.map(c => {
+      let sal = "";
+      if (!enSetup){ const it = siguienteDe(c); if (it){ const r = recomendar(c, traficoSync(it.fecha, toMin(c.hora))); sal = `<div class="sal">${DIAS[dow(it.fecha)]} ${diaMes(it.fecha)}<b>sal ${fmt(r.salida)}</b></div>`; } }
+      const sel = mostrada && mostrada.clase.id === c.id;
+      return `<div class="clase ${sel ? "sel" : ""}">
+        <button class="ir" data-ir="${c.id}" ${enSetup ? "disabled" : ""}><div class="h">${fmt(toMin(c.hora))}</div><div class="m"><b>${esc(c.materia)}</b><span>${esc(c.salon || "Sin salón")} · ${ampm(toMin(c.hora))}</span></div>${sal}</button>
+        <button class="del" data-del="${c.id}" aria-label="Quitar ${esc(c.materia)}">${ICO.x}</button></div>`; }).join("")}</div>`).join("")
+      : `<div class="empty"><div class="ico">${ICO.bus}</div>Todavía no tienes clases.<br>Agrega la primera para empezar.</div>`}
+    <button class="btn btn-ghost" id="b-add" style="margin-bottom:10px">+ Agregar clase</button>
+    ${enSetup ? `<button class="btn btn-primary" id="b-fin">Listo, ver mi hora de salida</button>` : ""}
+  </div>`;
+  $app.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => seleccionarClase(S.clases.find(c => c.id === b.dataset.ir)));
+  $app.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    const c = S.clases.find(c => c.id === b.dataset.del);
+    S.clases = S.clases.filter(x => x.id !== c.id); if (S.sel && S.sel.claseId === c.id) S.sel = null;
+    consulta = null; guardar(); render(); toast(`Quitaste ${esc(c.materia)} del ${DIAS_L[c.dia]}.`);
+  });
+  document.getElementById("b-add").onclick = hojaClase;
+  const fin = document.getElementById("b-fin");
+  fin && (fin.onclick = async () => {
+    if (!S.clases.length){ toast("Agrega al menos una clase.", "err"); return; }
+    cargando(fin, "Preparando tu primera recomendación…");
+    await api.guardarHorario(S.clases);
+    S.setup = true; consulta = null;
+    const it = proximasClases(1)[0];
+    if (it && it.dias > 0) ajustarReloj(it);   // simulamos que ya es el día de tu primera clase
+    ir("inicio"); toast("¡Listo! Así se ve tu hora de salida para tu primera clase.");
+  });
+}
+function hojaClase(){
+  hoja(`<h2>Agregar clase</h2><p class="sub">La hora es a la que debes estar en el salón.</p>
+    <div id="fc">
+      ${campo("materia","Materia","text","","Ej.: Bases de Datos")}
+      <div class="row2">
+        <div class="field"><label for="dia">Día</label><select class="input" id="dia" name="dia">${[1,2,3,4,5,6].map(d=>`<option value="${d}">${DIAS_L[d][0].toUpperCase()+DIAS_L[d].slice(1)}</option>`).join("")}</select></div>
+        <div class="field"><label for="hora">Hora</label><input class="input" type="time" id="hora" name="hora" value="08:00"><div class="errmsg" data-e="hora" hidden></div></div>
+      </div>
+      ${campo("salon","Salón (opcional)","text","","Ej.: Bloque C · 105")}
+      <button class="btn btn-primary" type="button" id="b-agregar">Agregar</button>
+    </div>`, () => {
+    const f = document.getElementById("fc");
+    const enviar = () => {
+      const d = datos(f), errs = {};
+      if (!d.materia.trim()) errs.materia = "Escribe el nombre de la materia.";
+      if (!d.hora) errs.hora = "Elige la hora.";
+      else if (toMin(d.hora) < toMin("05:30") || toMin(d.hora) > toMin("21:30")) errs.hora = "La universidad tiene clases entre 5:30 a. m. y 9:30 p. m.";
+      const choque = S.clases.find(c => c.dia === Number(d.dia) && c.hora === d.hora);
+      if (choque) errs.hora = `Ya tienes ${choque.materia} a esa hora.`;
+      mostrarErrores(f, errs); if (Object.keys(errs).length) return;
+      const nueva = {id:uid(), dia:Number(d.dia), hora:d.hora, materia:d.materia.trim(), salon:d.salon.trim()};
+      S.clases.push(nueva); consulta = null; guardar(); cerrarHoja(); render();
+      let extra = "";
+      if (S.setup){ const it = siguienteDe(nueva); if (it){ const r = recomendar(nueva, traficoSync(it.fecha, toMin(nueva.hora))); extra = ` Ese día saldrías a las ${fmt(r.salida)} ${ampm(r.salida)} Tócala para verla en detalle.`; } }
+      toast(`${esc(nueva.materia)} quedó el ${DIAS_L[nueva.dia]} a las ${fmt(toMin(nueva.hora))}.${extra}`);
+    };
+    document.getElementById("b-agregar").onclick = enviar;
+    alEnter(f, enviar);
+  });
+}
+
+// ---------- inicio (RF-03 + RF-05) ----------
+let consulta = null;
+async function vInicio(){
+  if (S.enCamino) return vEnCamino();
+  const prox = claseMostrada();
+  const lista = [prox, ...proximasClases(6).filter(x => !prox || x.clase.id !== prox.clase.id || x.fecha !== prox.fecha)].filter(Boolean).slice(0, 5);
+  if (!prox){
+    $app.innerHTML = `<div class="screen">${topbar("Inicio")}<div class="empty"><div class="ico">${ICO.bus}</div>No tienes clases en los próximos días.<br><button class="link" id="b-h">Revisar mi horario</button></div></div>`;
+    document.getElementById("b-h").onclick = () => ir("horario"); return;
+  }
+  const clave = JSON.stringify([lista.map(x => x.fecha + x.clase.id + x.clase.hora), S.sim.esc, ruta()]);
+  if (consulta && consulta.clave === clave && consulta.estado === "cargando"){ pintarCargando(prox); return; }
+  if (!consulta || consulta.clave !== clave){
+    consulta = {clave, estado:"cargando"};
+    pintarCargando(prox);
+    const res = await Promise.allSettled(lista.map(x => api.consultarTrafico(ruta(), x.fecha, toMin(x.clase.hora))));
+    consulta.traficos = res.map(r => r.status === "fulfilled" ? r.value : null); consulta.estado = "listo";
+    if (consulta.clave !== clave || S.pantalla !== "inicio" || S.enCamino) return;
+  }
+  pintarInicio(prox, lista.map((x,i) => ({...x, rec: recomendar(x.clase, consulta.traficos[i])})));
+}
+const chipRuta = () => `<button class="ruta-chip" id="b-ruta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0e7a5a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>${esc(ruta().nombre)} <span>▾</span></button>`;
+function pintarCargando(prox){
+  $app.innerHTML = `<div class="screen">${topbar("Inicio")}${chipRuta()}
+    <div class="hero"><div class="lbl">PRÓXIMA SALIDA</div>
+      <div class="sk" style="height:62px;width:62%;margin:10px auto"></div>
+      <div class="det">${esc(prox.clase.materia)} · ${fmt(toMin(prox.clase.hora))} ${ampm(toMin(prox.clase.hora))}</div>
+      <div class="badges"><span class="badge b-soft"><span style="width:12px;height:12px;border:2px solid #cfd6d2;border-top-color:var(--brand);border-radius:50%;animation:gira .7s linear infinite"></span> Consultando el tráfico…</span></div></div>
+    <div class="sk" style="height:18px;width:55%;margin-bottom:10px"></div><div class="sk" style="height:40px;margin-bottom:12px"></div>
+    <div class="sk" style="height:14px;width:90%;margin-bottom:7px"></div><div class="sk" style="height:14px;width:70%"></div></div>`;
+  document.getElementById("b-ruta").onclick = hojaRutas;
+}
+function estadoHora(rec, prox){
+  if (prox.dias > 0) return {t: prox.dias===1 ? "ES MAÑANA" : `FALTAN ${prox.dias} DÍAS`, c:"b-soft"};
+  const falta = rec.salida - S.sim.min;
+  if (falta >= 0) return {t: falta <= 3 ? "SAL EN " + falta + " MIN" : "A TIEMPO", c: falta <= 3 ? "b-warn" : "b-ok"};
+  if (falta >= -rec.M) return {t:"SAL YA", c:"b-warn"};
+  return {t:"VAS TARDE", c:"b-bad"};
+}
+function pintarInicio(prox, lista){
+  const rec = lista[0].rec, c = prox.clase, est = estadoHora(rec, prox), t = rec.tramos, traf = rec.trafico;
+  const key = prox.fecha + c.id + "|" + rec.ruta.id;
+  const mostrarPush = prox.dias === 0 && !S.pushVisto[prox.fecha + c.id];
+  const total = t.cam1 + t.espera + t.bus + t.extra + t.cam2 + Math.max(0,t.ajuste) + rec.colchon + rec.M;
+  const pct = v => (v/total*100).toFixed(1) + "%";
+  const busTxt = rec.modo === "degradado" ? `Bus ${t.bus}` : `Bus ${t.bus}${t.extra ? (t.extra > 0 ? " + " : " − ") + Math.abs(t.extra) : ""}`;
+  const cuando = prox.dias === 0 ? "hoy" : prox.dias === 1 ? "mañana" : "el " + DIAS_L[dow(prox.fecha)];
+  // aviso de cambio con el motivo
+  const ant = S.ultRec[key], ahora = {salida:rec.salida, cond: traf ? traf.cond : "api", bus: t.extra + t.espExtra, decl:rec.decl, margen:rec.M + S.prefs.q, colchon:rec.colchon};
+  let cambio = "";
+  if (ant && ant.salida !== rec.salida){
+    const r = [];
+    if (ant.cond !== ahora.cond) r.push(traf ? (traf.por ? `hay ${traf.etiqueta.toLowerCase()}` : traf.etiqueta.toLowerCase()) : "no hay datos de tráfico");
+    else if (ant.bus !== ahora.bus) r.push(ahora.bus > ant.bus ? "el tráfico empeoró" : "el tráfico mejoró");
+    if (ant.decl !== ahora.decl) r.push("cambiaste el recorrido");
+    if (ant.margen !== ahora.margen) r.push("cambiaste tu margen");
+    const dif = rec.salida - ant.salida;
+    cambio = `<div class="aviso ${dif < 0 ? "warn" : "ok"}">${dif < 0 ? ICO.alerta : ICO.check}<div><b>Tu hora cambió: ${fmt(ant.salida)} → ${fmt(rec.salida)}</b> (${dif < 0 ? Math.abs(dif) + " min antes" : dif + " min después"})${r.length ? ", porque " + r.join(" y ") : ""}.</div></div>`;
+  }
+  S.ultRec[key] = ahora; guardar();
+  const chipCls = !traf ? "b-bad" : ["normal","despejado"].includes(traf.cond) ? "b-ok" : ["pico","busDemora"].includes(traf.cond) ? "b-warn" : "b-bad";
+  const chipTraf = traf ? `<span class="badge ${chipCls}">${traf.etiqueta}${traf.extra + traf.espExtra ? ` · ${traf.extra + traf.espExtra > 0 ? "+" : ""}${traf.extra + traf.espExtra} min` : ""}</span>` : `<span class="badge b-bad">Sin datos de tráfico</span>`;
+  $app.innerHTML = `<div class="screen">
+    ${mostrarPush ? `<div class="push"><div class="ic">${ICO.logo}</div><div><b>ATiempo · ahora</b><p>Sal a las ${fmt(rec.salida)} para llegar a ${esc(c.materia)} (${fmt(rec.T)}).</p></div><button class="x" id="push-x" aria-label="Cerrar aviso">×</button></div>` : topbar(prox.elegida ? "Clase escogida" : "Inicio")}
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">${chipRuta()}${prox.elegida ? `<button class="link" id="b-volver" style="margin-bottom:12px;font-size:13px">Ver la próxima</button>` : ""}</div>
+    ${rec.modo === "degradado" ? `<div class="aviso warn">${ICO.alerta}<div><b>No pudimos consultar el tráfico.</b> ${rec.n >= 3 ? "Calculamos con el promedio de tus viajes con este recorrido." : "Calculamos con los tiempos que escribiste, por eso dejamos un colchón más grande."}</div></div>` : ""}
+    <div class="hero">
+      <div class="lbl">PRÓXIMA SALIDA${prox.dias ? " · " + DIAS_L[dow(prox.fecha)].toUpperCase() + " " + diaMes(prox.fecha) : ""}</div>
+      <div class="big">${fmt(rec.salida)}<small>${ampm(rec.salida)}</small></div>
+      <div class="det">${esc(c.materia)} ${fmt(rec.T)} · Llegada estimada ${fmt(rec.llegada)}</div>
+      <div class="badges"><span class="badge ${est.c}"><span class="dot"></span>${est.t}</span><span class="badge b-soft">Confianza ${rec.conf}</span></div>
+    </div>
+    ${cambio}
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:8px;gap:6px"><div class="q" style="margin:0;white-space:nowrap">¿De dónde sale la hora?</div><span style="white-space:nowrap">${chipTraf}</span></div>
+    <div class="bar">
+      <div class="seg s-walk" style="width:${pct(t.cam1)}" title="Caminata al paradero">${t.cam1}</div>
+      <div class="seg s-wait" style="width:${pct(t.espera)}" title="Espera">${t.espera}</div>
+      <div class="seg s-bus" style="width:${pct(t.bus+t.extra+Math.max(0,t.ajuste))}">${busTxt}</div>
+      <div class="seg s-walk" style="width:${pct(t.cam2)}" title="Caminata hasta el salón">${t.cam2}</div>
+      <div class="seg s-pad" style="width:${pct(rec.colchon+rec.M)}" title="Margen">+${rec.colchon+rec.M}</div>
+    </div>
+    <div class="leyenda"><span><i style="background:var(--walk)"></i>Caminata</span><span><i style="background:var(--wait)"></i>Espera</span><span><i style="background:var(--brand)"></i>Bus</span><span><i style="background:#f3dfbd"></i>Margen</span></div>
+    <div class="expl">
+      <span><b>Caminata y espera:</b> lo que declaraste en «${esc(rec.ruta.nombre)}»${t.espExtra ? `, más ${t.espExtra} min de espera por ${traf.por}` : ""}.</span>
+      <span><b>Bus:</b> ${rec.modo === "degradado" ? "sin datos de tráfico; " + (rec.n >= 3 ? "usamos el promedio de tus viajes." : "usamos lo que declaraste.") : t.extra > 0 ? `en ${traf.franja.toLowerCase()}${traf.por ? " y con " + traf.por : ""} le suma ${t.extra} min.` : t.extra < 0 ? `en ${traf.franja.toLowerCase()} va ${-t.extra} min más rápido de lo normal.` : "el tráfico está normal."}</span>
+      ${rec.modo !== "degradado" && rec.n ? `<span><b>Tu historial:</b> en tus ${rec.n} viajes a esta hora tardaste ${Math.round(rec.H)} min en promedio; con el tráfico de hoy serían ${rec.E} min. Tu historial pesa ${Math.round(rec.w*100)} % y el tráfico de hoy ${100-Math.round(rec.w*100)} %: ${rec.Dr} min.</span>` : ""}
+      <span><b>Total:</b> ${rec.Dr} min de viaje + ${rec.colchon+rec.M} min de margen${rec.n < 3 ? " (más grande porque aún hay pocos viajes con este recorrido)" : ""}.</span>
+    </div>
+    <div style="text-align:right;margin-bottom:12px"><button class="link" id="b-pref">Ajustar margen</button></div>
+    ${prox.dias === 0 ? `<button class="btn btn-primary" id="b-sali">Ya salí</button>` : `<button class="btn" disabled>Esta clase es ${cuando}</button>`}
+    ${lista.length > 1 ? `<div class="q" style="margin-top:22px">Tus próximas salidas</div>
+    <div class="card proximas" style="padding:4px 14px">${lista.slice(1).map((x,i,a) => { const tr = x.rec.trafico; return `
+      <div class="viaje" data-c="${x.clase.id}" style="${i===a.length-1?"border:0":""}">
+        <span><b>${DIAS[dow(x.fecha)]} ${diaMes(x.fecha)}</b> · ${esc(x.clase.materia)} ${fmt(x.rec.T)}<br><span style="font-size:12px;color:var(--muted)">${tr ? tr.etiqueta + (tr.extra + tr.espExtra ? ` (${tr.extra + tr.espExtra > 0 ? "+" : ""}${tr.extra + tr.espExtra} min)` : "") : "Sin datos de tráfico"}</span></span>
+        <span style="text-align:right;white-space:nowrap;padding-left:8px"><span style="font-size:12px;color:var(--muted)">sal </span><b style="font-size:17px">${fmt(x.rec.salida)}</b></span></div>`; }).join("")}</div>
+    <p style="font-size:12px;color:var(--muted);margin-top:6px">Toca una para verla en detalle.</p>` : ""}
+  </div>`;
+  document.getElementById("push-x") && (document.getElementById("push-x").onclick = () => { S.pushVisto[prox.fecha + c.id] = true; guardar(); render(); });
+  document.getElementById("b-ruta").onclick = hojaRutas;
+  document.getElementById("b-volver") && (document.getElementById("b-volver").onclick = () => { S.sel = null; S.sim.fecha = HOY; S.sim.min = AHORA; consulta = null; guardar(); render(); });
+  document.getElementById("b-pref").onclick = () => hojaPrefs(prox);
+  $app.querySelectorAll(".proximas [data-c]").forEach(el => el.onclick = () => seleccionarClase(S.clases.find(c => c.id === el.dataset.c)));
+  const bs = document.getElementById("b-sali");
+  bs && (bs.onclick = () => hojaSali(prox, rec));
+}
+function hojaRutas(){
+  hoja(`<h2>¿Desde dónde sales?</h2><p class="sub">La hora de salida se calcula con el recorrido que escojas.</p>
+    <div class="opc">${S.rutas.map(r => `<button data-r="${r.id}" class="${r.id === S.rutaId ? "sel" : ""}"><b>${esc(r.nombre)}</b><span>${resumenRuta(r)}</span></button>`).join("")}</div>
+    <button class="btn btn-ghost" id="b-gest">Administrar recorridos</button>`, () => {
+    document.querySelectorAll("[data-r]").forEach(b => b.onclick = () => { cerrarHoja(); if (b.dataset.r !== S.rutaId) usarRuta(b.dataset.r, true); });
+    document.getElementById("b-gest").onclick = () => { cerrarHoja(); ir("recorrido"); };
+  });
+}
+function hojaPrefs(prox){
+  let q = S.prefs.q, M = S.prefs.M;
+  const pinta = () => {
+    const tr = traficoSync(prox.fecha, toMin(prox.clase.hora)), prev = recomendar(prox.clase, tr);
+    const tmp = S.prefs; S.prefs = {q, M}; const r2 = recomendar(prox.clase, tr); S.prefs = tmp;
+    document.getElementById("prev").innerHTML = `Saldrías a las <b>${fmt(r2.salida)}</b> ${ampm(r2.salida)}${r2.salida !== prev.salida ? ` <span style="color:var(--muted)">(antes ${fmt(prev.salida)})</span>` : ""}`;
+    document.querySelectorAll("[data-q]").forEach(b => b.classList.toggle("sel", b.dataset.q === q));
+    document.getElementById("mv").textContent = M + " min";
+  };
+  hoja(`<h2>¿Qué tan seguro quieres llegar?</h2><p class="sub">Entre más seguro, más temprano te decimos que salgas.</p>
+    <div class="opc">${Object.entries(Z).map(([k,v]) => `<button data-q="${k}"><b>${v.t}</b><span>${v.d}</span></button>`).join("")}</div>
+    <div class="field"><label>Margen extra para llegar tranquilo: <b id="mv"></b></label><input type="range" min="0" max="15" step="1" value="${M}" id="rm"></div>
+    <div class="preview" id="prev"></div>
+    <button class="btn btn-primary" id="b-ok">Guardar</button>`, () => {
+    document.querySelectorAll("[data-q]").forEach(b => b.onclick = () => { q = b.dataset.q; pinta(); });
+    document.getElementById("rm").oninput = e => { M = Number(e.target.value); pinta(); };
+    document.getElementById("b-ok").onclick = () => { S.prefs = {q, M}; guardar(); cerrarHoja(); render(); toast("Preferencias guardadas."); };
+    pinta();
+  });
+}
+function hojaSali(prox, rec){
+  const def = S.sim.min > rec.salida - 10 ? S.sim.min : rec.salida;
+  hoja(`<h2>¿A qué hora saliste?</h2><p class="sub">Lo usamos para saber si la recomendación funcionó.</p>
+    <div class="field"><input class="input" type="time" id="hs" value="${hhmm(def)}" style="font-size:22px;font-weight:700;text-align:center"><div class="errmsg" id="es" hidden></div></div>
+    <button class="btn btn-primary" id="b-ok">Confirmar salida</button>`, () => {
+    document.getElementById("b-ok").onclick = () => {
+      const v = document.getElementById("hs").value, es = document.getElementById("es");
+      if (!v){ es.hidden = false; es.textContent = "Elige la hora."; return; }
+      const s = toMin(v);
+      if (s >= rec.T){ es.hidden = false; es.textContent = "Esa hora es después del inicio de la clase. Revísala."; return; }
+      S.enCamino = {fecha:prox.fecha, rutaId:rec.ruta.id, claseId:prox.clase.id, materia:prox.clase.materia, horaClase:rec.T, salida:s, pred:rec.Dr};
+      S.sim.min = Math.max(S.sim.min, s); S.pushVisto[prox.fecha+prox.clase.id] = true;
+      guardar(); cerrarHoja(); render();
+      const dif = s - rec.salida;
+      toast(dif > 2 ? `Saliste ${dif} min después de lo recomendado.` : "¡Buen viaje! Cuando llegues, marca tu llegada.");
+    };
+  });
+}
+function vEnCamino(){
+  const e = S.enCamino, est = e.salida + e.pred, holgura = e.horaClase - est;
+  $app.innerHTML = `<div class="screen">${topbar("En camino")}
+    <div class="hero" style="border-color:var(--brand)">
+      <div class="lbl">EN CAMINO A ${esc(e.materia).toUpperCase()}</div>
+      <div class="big" style="font-size:52px">${fmt(est)}<small>llegada est.</small></div>
+      <div class="det">Saliste ${fmt(e.salida)} · Clase ${fmt(e.horaClase)}</div>
+      <div class="badges"><span class="badge ${holgura >= 0 ? "b-ok" : "b-bad"}"><span class="dot"></span>${holgura >= 0 ? `LLEGARÍAS ${holgura} MIN ANTES` : `LLEGARÍAS ${-holgura} MIN TARDE`}</span></div>
+    </div>
+    <div class="aviso ok">${ICO.bus}<div>Cuando entres a la universidad, toca <b>Marcar llegada</b>. Con cada viaje marcado, ATiempo ajusta tu estimación personal.</div></div>
+    <button class="btn btn-primary" id="b-lleg">Marcar llegada</button>
+    <button class="btn" style="color:var(--muted);font-size:14px;margin-top:6px" id="b-cancel">No hice este viaje</button></div>`;
+  document.getElementById("b-lleg").onclick = hojaLlegada;
+  document.getElementById("b-cancel").onclick = () => { S.enCamino = null; guardar(); render(); toast("Listo, no registramos este viaje."); };
+}
+function hojaLlegada(){
+  const e = S.enCamino;
+  hoja(`<h2>¿A qué hora llegaste?</h2><p class="sub">Hora en que entraste a la universidad.</p>
+    <div class="field"><input class="input" type="time" id="hl" value="${hhmm(e.salida + e.pred)}" style="font-size:22px;font-weight:700;text-align:center"><div class="errmsg" id="el" hidden></div></div>
+    <button class="btn btn-primary" id="b-ok">Guardar viaje</button>`, () => {
+    document.getElementById("b-ok").onclick = async ev => {
+      const v = document.getElementById("hl").value, el = document.getElementById("el"), l = v ? toMin(v) : NaN;
+      if (!v || l <= e.salida){ el.hidden = false; el.textContent = `La llegada tiene que ser después de tu salida (${fmt(e.salida)}).`; return; }
+      if (l - e.salida > 240){ el.hidden = false; el.textContent = "¿Más de 4 horas de viaje? Revisa la hora."; return; }
+      cargando(ev.currentTarget, "Guardando…");
+      const viaje = {id:uid(), fecha:e.fecha, rutaId:e.rutaId, claseId:e.claseId, materia:e.materia, horaClase:e.horaClase, salida:e.salida, llegada:l, pred:e.pred};
+      await api.registrarViaje(viaje);
+      const n = historial(e.horaClase, e.rutaId).length;
+      S.enCamino = null; S.sel = null; S.sim.fecha = e.fecha; S.sim.min = Math.max(S.sim.min, l); S.ultimo = viaje.id; consulta = null; guardar(); cerrarHoja();
+      const err = (l - e.salida) - e.pred, aTiempo = l <= e.horaClase;
+      ir("tablero");
+      toast(`${aTiempo ? "Llegaste a tiempo." : `Llegaste ${l - e.horaClase} min tarde.`} La estimación ${Math.abs(err) <= 1 ? "acertó" : `se equivocó por ${Math.abs(err)} min`}; ya la ajustamos con ${n} ${n === 1 ? "viaje" : "viajes"}.`);
+    };
+  });
+}
+
+// ---------- tablero ----------
+function vTablero(){
+  const fin = S.sim.fecha, ini = addDays(fin, -30);
+  const mes = S.viajes.filter(v => v.fecha >= ini && v.fecha <= fin);
+  const ok = mes.filter(v => v.llegada <= v.horaClase).length;
+  const mae = mes.length ? media(mes.map(v => Math.abs(dur(v) - v.pred))) : 0;
+  const lunes = addDays(fin, -((dow(fin)+6)%7));
+  const semana = S.viajes.filter(v => v.fecha >= lunes && v.fecha <= fin).sort((a,b) => a.fecha < b.fecha ? 1 : -1);
+  $app.innerHTML = `<div class="screen">${topbar("Tablero")}
+    <h1>Mis llegadas</h1>
+    ${S.viajes.length ? `<div class="hero" style="margin-top:12px">
+      <div class="det">Llegadas a tiempo · últimos 30 días</div>
+      <div class="big" style="font-size:54px">${ok} / ${mes.length}</div>
+      <div class="det">Error promedio de la estimación: ${Math.round(mae)} min</div></div>
+    <div class="mini-stats">
+      <div class="card"><b>${mes.length ? Math.round(media(mes.map(dur))) : "–"} min</b><span>dura tu viaje en promedio</span></div>
+      <div class="card"><b>${S.viajes.length}</b><span>viajes registrados en total</span></div>
+    </div>
+    <div class="q" style="margin-top:16px">Esta semana</div>
+    <div class="lista-viajes">${semana.length ? semana.map(v => { const okv = v.llegada <= v.horaClase; return `
+      <div class="viaje ${S.ultimo===v.id?"nuevo":""}"><span><b>${DIAS[dow(v.fecha)]}</b> · salida ${fmt(v.salida)}</span><span>llegó ${fmt(v.llegada)}<span class="tick ${okv?"ok":"bad"}">${okv?"✓":"✕"}</span></span></div>`; }).join("")
+      : `<div class="empty" style="padding:14px">Aún no hay viajes esta semana.</div>`}</div>`
+    : `<div class="empty"><div class="ico">${ICO.bus}</div><b style="color:var(--ink)">Todavía no tienes viajes.</b><br>Cuando salgas a clase toca «Ya salí» en Inicio y al llegar marca tu llegada. Aquí verás qué tanto aciertas.</div>`}
+    <p style="color:var(--muted);font-size:14px;margin:4px 0 14px">Con cada viaje marcado, ATiempo ajusta tu estimación personal.</p>
+    <button class="btn ${S.enCamino ? "btn-primary" : ""}" id="b-lleg" ${S.enCamino ? "" : "disabled"}>Marcar llegada</button>
+    ${S.enCamino ? "" : `<p style="text-align:center;font-size:12.5px;color:var(--muted);margin-top:6px">Se activa cuando tocas «Ya salí» en Inicio.</p>`}
+    ${S.viajes.length ? `<p style="text-align:center;margin-top:18px"><button class="link" id="b-csv" style="font-size:13px">Exportar mis registros (CSV)</button></p>` : ""}
+  </div>`;
+  S.ultimo = null;
+  document.getElementById("b-lleg").onclick = () => S.enCamino && hojaLlegada();
+  document.getElementById("b-csv") && (document.getElementById("b-csv").onclick = exportarCSV);
+}
+function exportarCSV(){ // RF-08
+  const filas = [["fecha","recorrido","materia","hora_clase","salida","llegada","duracion_real_min","duracion_estimada_min","error_min","a_tiempo"]]
+    .concat(S.viajes.map(v => [v.fecha, (S.rutas.find(r => r.id === v.rutaId)||{}).nombre || "", v.materia, hhmm(v.horaClase), hhmm(v.salida), hhmm(v.llegada), dur(v), v.pred, dur(v)-v.pred, v.llegada <= v.horaClase ? "si" : "no"]));
+  const csv = filas.map(f => f.map(x => `"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿"+csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "atiempo_registros.csv"; a.click();
+  toast(`Exportados ${S.viajes.length} viajes (estimado vs. real).`);
+}
+
+// ---------- panel de prueba: solo escenarios ----------
+const $panel = document.getElementById("panel"), $esc = document.getElementById("p-esc");
+function pintarPanel(){
+  $esc.innerHTML = Object.entries(ESCENARIOS).map(([k,x]) =>
+    `<button data-esc="${k}" class="${S.sim.esc === k ? "on" : ""}"><span><b>${x.t}</b>${x.d}</span></button>`).join("");
+}
+$esc.onclick = e => {
+  const b = e.target.closest("[data-esc]"); if (!b) return;
+  const k = b.dataset.esc, x = ESCENARIOS[k];
+  $panel.classList.remove("movil");
+  if (!S.setup){ S.sim.esc = k; guardar(); pintarPanel(); toast("Primero configura tu recorrido o toca «Ver con un mes de viajes (demo)».", "err"); return; }
+  if (S.enCamino){ S.sim.esc = k; guardar(); pintarPanel(); toast(`${x.t}: se verá en tu próxima salida (ahora vas en camino).`); return; }
+  const antes = salidaRapida();
+  S.sim.esc = k;
+  const item = claseMostrada();
+  if (item && (k === "dormido" || (k === "normal" && item.dias === 0))) ajustarReloj(item);  // «normal» vuelve a poner el reloj antes de la salida
+  consulta = null; guardar();
+  const despues = salidaRapida();
+  S.pantalla = "inicio"; render(); $app.scrollTop = 0;
+  let msg = `${x.t}. `;
+  if (!despues) msg += "No tienes clases próximas.";
+  else if (k === "dormido") msg += `Son las ${fmt(S.sim.min)} y debías salir a las ${fmt(despues.rec.salida)}.`;
+  else if (antes && antes.rec.salida !== despues.rec.salida) msg += `Tu salida pasó de ${fmt(antes.rec.salida)} a ${fmt(despues.rec.salida)}.`;
+  else msg += `Tu salida queda a las ${fmt(despues.rec.salida)}.`;
+  toast(msg);
+};
+document.getElementById("p-demo").onclick = () => { $panel.classList.remove("movil"); cargarDemo(); toast("Demo cargada: 3 recorridos, 7 clases y un mes de viajes."); };
+document.getElementById("p-reset").onclick = () => { $panel.classList.remove("movil"); S = estadoVacio(); consulta = null; guardar(); render(); toast("Se borró todo. Empiezas de cero."); };
+document.getElementById("fab").onclick = () => $panel.classList.toggle("movil");
+
+render();
+</script>
+</body>
+</html>
