@@ -496,8 +496,16 @@ function Mapa({origen, destino, onPick}){
   useEffect(() => {
     if (!disponible) return;
     const m = L.map(caja.current, {zoomControl:false}).setView([4.67,-74.08], 11);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-      {maxZoom:18, subdomains:"abcd", attribution:"© OpenStreetMap · © CARTO"}).addTo(m);
+    // Mapa base: Esri World Street Map (datos de OpenStreetMap y otros). No pide clave y funciona
+    // tanto abriendo el archivo local como desde GitHub Pages. Si fallara, se cambia a OpenStreetMap.
+    const esri = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+      {maxZoom:19, attribution:"Mapa © Esri · OpenStreetMap"}).addTo(m);
+    let fallos = 0, cambiado = false;
+    esri.on("tileerror", () => {
+      if (cambiado || ++fallos < 3 || location.protocol === "file:") return;
+      cambiado = true; m.removeLayer(esri);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:19, attribution:"© OpenStreetMap"}).addTo(m);
+    });
     capa.current = L.layerGroup().addTo(m);
     m.on("click", e => pick.current && pick.current({lat:+e.latlng.lat.toFixed(4), lng:+e.latlng.lng.toFixed(4)}));
     mapa.current = m; setTimeout(() => m.invalidateSize(), 250);
